@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# --- Configuration ---
+# The directory where SSH keys are typically stored
+SSH_DIR="$HOME/.ssh"
+# The type of key to generate
+KEY_TYPE="ed25519"
+
+# --- Get user input ---
+read -p "Enter a comment for the key (this will be used in the filename and comment, e.g., 'github_personal'): " key_comment
+
+# --- Basic input validation ---
+if [ -z "$key_comment" ]; then
+  echo "Error: Comment cannot be empty."
+  exit 1
+fi
+
+# --- Construct the full path for the key file ---
+# We'll use the comment as the base filename
+KEY_FILE="${SSH_DIR}/${key_comment}"
+
+# --- Check if the file already exists ---
+# The -f test checks if a file exists and is a regular file
+if [ -f "$KEY_FILE" ]; then
+  echo "Error: Key file '$KEY_FILE' already exists."
+  echo "Aborting key generation."
+  exit 1 # Exit with a non-zero status to indicate an error
+fi
+
+# --- Generate the key if the file does not exist ---
+echo "Generating new ${KEY_TYPE} key pair:"
+echo "  Private key file: $KEY_FILE"
+echo "  Public key file:  ${KEY_FILE}.pub"
+echo "  Passphrase:       None (using -P \"\")"
+
+# Run ssh-keygen with the specified options
+# -t: key type
+# -f: output filename
+# -P "": specify an empty passphrase (neglects the prompt)
+ssh-keygen -t "$KEY_TYPE" -f "$KEY_FILE" -C "$key_comment" -P ""
+
+# --- Check if ssh-keygen was successful ---
+if [ $? -eq 0 ]; then
+  echo "Key pair generated successfully."
+  # Inform the user about the public key file, as that's what they usually need
+  echo "Your public key is in: ${KEY_FILE}.pub"
+  echo "You can copy it using: cat ${KEY_FILE}.pub"
+else
+  echo "Error generating key."
+  exit 1 # Exit with a non-zero status
+fi
+
+exit 0 # Exit successfully
